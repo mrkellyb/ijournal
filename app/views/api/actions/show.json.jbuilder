@@ -1,0 +1,1 @@
+json.partial! @action, partial: 'action', as: :action
