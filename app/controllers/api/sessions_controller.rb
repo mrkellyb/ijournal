@@ -2,7 +2,8 @@ class Api::SessionsController < ApplicationController
   before_action :authenticate_user
 
   def index
-    @sessions = Session.all
+    # @sessions = Session.all
+    @sessions = Session.where(user_id: current_user.id).order(:date)
     render "index.json.jbuilder"
   end
 
@@ -41,8 +42,6 @@ class Api::SessionsController < ApplicationController
           end
         end
       end
-
-
       render "show.json.jbuilder"
     else
       render json: {errors: @session.errors.full_messages}, status: :unprocessable_entity
@@ -64,6 +63,27 @@ class Api::SessionsController < ApplicationController
     @session.stop_notes = params[:stop_notes] || @session.stop_notes
 
     if @session.save
+      params[:actions].each do |action|
+        db_action = Action.find(action["id"])
+        db_action.name =  action["name"] || db_action.name
+        db_action.resource = action["resource"] || db_action.resource
+        db_action.resource_url = action["resource_url"] || db_action.resource_url
+        db_action.start_tempo = action["start_tempo"] || db_action.start_tempo
+        db_action.stop_tempo = action["stop_tempo"] || db_action.stop_tempo
+        db_action.keys = action["keys"] || db_action.keys
+        db_action.time_spent = action["time_spent"] || db_action.time_spent
+        db_action.notes = action["notes"] || db_action.notes
+        if db_action.save
+          db_action.action_tags.destroy_all
+          action["tag_ids"].each do |tag_id|
+            ActionTag.create(
+              action_id: db_action.id, 
+              tag_id: tag_id
+              )
+          end
+        end
+      end
+
       render "show.json.jbuilder"
     else
       render json: {errors: @session.errors.full_messages}, status: :unprocessable_entity
