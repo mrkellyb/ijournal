@@ -3,7 +3,7 @@ class Api::SessionsController < ApplicationController
 
   def index
     # @sessions = Session.all
-    @sessions = Session.where(user_id: current_user.id).order(:date)
+    @sessions = Session.where(user_id: current_user.id).order(:date => :desc)
     render "index.json.jbuilder"
   end
 
